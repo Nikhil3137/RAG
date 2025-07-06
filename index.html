@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicare PDF Query System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+        <h1 class="text-2xl font-bold mb-4 text-center">Medicare PDF Query System</h1>
+        <div class="mb-4">
+            <input
+                type="text"
+                id="queryInput"
+                class="w-full p-2 border rounded"
+                placeholder="Ask a question about Medicare (e.g., What are the important deadlines for Medicare enrollment?)"
+            />
+        </div>
+        <button
+            onclick="submitQuery()"
+            class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+        >
+            Submit Query
+        </button>
+        <div id="response" class="mt-4 p-4 bg-gray-50 rounded hidden">
+            <pre id="responseText" class="text-sm overflow-x-auto max-h-64 whitespace-pre-wrap"></pre>
+        </div>
+        <div id="error" class="mt-4 p-4 bg-red-100 text-red-700 rounded hidden"></div>
+    </div>
+
+    <script>
+        async function submitQuery() {
+            const queryInput = document.getElementById("queryInput").value;
+            const responseDiv = document.getElementById("response");
+            const responseText = document.getElementById("responseText");
+            const errorDiv = document.getElementById("error");
+
+            // Reset UI
+            responseDiv.classList.add("hidden");
+            errorDiv.classList.add("hidden");
+
+            if (!queryInput.trim()) {
+                errorDiv.textContent = "Query cannot be empty";
+                errorDiv.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch("/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: queryInput }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    errorDiv.textContent = errorData.detail || "An error occurred";
+                    errorDiv.classList.remove("hidden");
+                    return;
+                }
+
+                const data = await response.json();
+                responseText.textContent = JSON.stringify(data, null, 2);
+                responseDiv.classList.remove("hidden");
+            } catch (error) {
+                errorDiv.textContent = "Failed to fetch response: " + error.message;
+                errorDiv.classList.remove("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
